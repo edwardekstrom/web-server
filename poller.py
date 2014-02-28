@@ -1,6 +1,7 @@
 import select
 import socket
 import sys
+import os
 from BaseHTTPServer import BaseHTTPRequestHandler
 from StringIO import StringIO
 
@@ -70,8 +71,8 @@ class Poller:
         data = self.clients[fd].recv(self.size)
         if data:
             request = HTTPRequest(data)
-            self.generateResponse(request)
-            self.clients[fd].send('HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 3\r\nConnection: Keep-Alive\r\n\r\n123')
+            response = self.generateResponse(request)
+            self.clients[fd].send(response)
         else:
             self.poller.unregister(fd)
             self.clients[fd].close()
@@ -81,16 +82,22 @@ class Poller:
         hostname = request.headers['host']
         filePath = self.hosts[hostname]
         filePath += request.path
-        print filePath
+        #print filePath
         try:
+            fileName, fileExtension = os.path.splitext(filePath)
             f = open(filePath)
+            size = os.path.getsize(filePath)
+            response = 'HTTP/1.1 200 OK\r\nContent-Type: ' + fileExtension +'\r\nContent-Length: ' + str(size) + '\r\nConnection: Keep-Alive\r\n\r\n' + f.read()
+            #print 'name: ' + fileName + '\n' + 'file extension: ' + fileExtension 
+            print response
+            return response
         except IOError as (errno,strerror):
             if errno == 13:
-                print '403 Forbidden'
+                return 'HTTP/1.1 403 Forbidden\r\nContent-Type: text/plain\r\nContent-Length: 3\r\n\r\n403'
             elif errno == 2:
-                print '404 Not Found'
+                return 'HTTP/1.1 404 Not Found\r\nContent-Type: text/plain\r\nContent-Length: 3\r\n\r\n404'
             else:
-                print '500 Internal Server Error'
+                return 'HTTP/1.1 500 Internal Server Error\r\nContent-Type: text/plain\r\nContent-Length: 3\r\n\r\n500'
 
 class HTTPRequest(BaseHTTPRequestHandler):
     def __init__(self, request_text):
