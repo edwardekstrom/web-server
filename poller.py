@@ -82,6 +82,15 @@ class Poller:
         filePath = self.hosts[hostname]
         filePath += request.path
         print filePath
+        try:
+            f = open(filePath)
+        except IOError as (errno,strerror):
+            if errno == 13:
+                print '403 Forbidden'
+            elif errno == 2:
+                print '404 Not Found'
+            else:
+                print '500 Internal Server Error'
 
 class HTTPRequest(BaseHTTPRequestHandler):
     def __init__(self, request_text):
