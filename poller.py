@@ -1,6 +1,8 @@
 import select
 import socket
 import sys
+from BaseHTTPServer import BaseHTTPRequestHandler
+from StringIO import StringIO
 
 class Poller:
     """ Polling server """
@@ -67,8 +69,47 @@ class Poller:
     def handleClient(self,fd):
         data = self.clients[fd].recv(self.size)
         if data:
-            self.clients[fd].send(data)
+            request = HTTPRequest(data)
+            self.generateResponse(request)
+            self.clients[fd].send('HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 3\r\nConnection: Keep-Alive\r\n\r\n123')
         else:
             self.poller.unregister(fd)
             self.clients[fd].close()
             del self.clients[fd]
+            
+    def generateResponse(self,request):
+        hostname = request.headers['host']
+        filePath = self.hosts[hostname]
+        filePath += request.path
+        print filePath
+
+class HTTPRequest(BaseHTTPRequestHandler):
+    def __init__(self, request_text):
+        self.rfile = StringIO(request_text)
+        self.raw_requestline = self.rfile.readline()
+        self.error_code = self.error_message = None
+        self.parse_request()
+
+    def send_error(self, code, message):
+        self.error_code = code
+        self.error_message = message
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        

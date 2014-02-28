@@ -20,6 +20,18 @@ class Main:
 
     def run(self):
         p = Poller(self.args.port)
+        p.hosts = dict()
+        p.media_types = dict()
+        p.timeout = 0
+        with open('web.conf', 'r') as f:
+            for line in f:
+                words = line.split()
+                if words[0] == 'host':
+                    p.hosts[words[1]] = words[2]
+                if words[0] == 'media':
+                    p.media_types[words[1]] = words[2]
+                if words[0] == 'parameter':
+                    p.timeout = words[2]
         p.run()
 
 if __name__ == "__main__":
