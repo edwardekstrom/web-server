@@ -1,0 +1,66 @@
+To run my program type 'python webserver-poll.py' into the terminal.
+
+
+Command line arguments -p [port] and -d to set debugging.  I parse the command line arguments on on the follwing lines:
+
+	command line args: webserver-poll.py lines 17 - 19
+
+
+My web.conf file is in the root project directory.
+
+
+All of the errors are handled properly, you will see when you run the test but just in case here are the line numbers where I handle them:
+
+	200: poller.py lines 145 - 159
+
+	400: poller.py lines 136 - 137
+
+	403: poller.py lines 161 - 162
+
+	404: poller.py lines 163 - 164
+
+	500: poller.py lines 165 - 166
+
+	501: poller.py lines 134 - 135
+
+
+I also implemented the HEAD request and the GET request with the 'Range' header for extra credit.  Here are the line numbers where I implemented that functionality:
+
+	GET with range:    poller.py lines 147 - 154
+
+	GET without range: poller.py lines 155 - 156
+
+	HEAD:              poller.py lines 157 - 158
+
+
+I parse my web.conf file in webserver-poll.py.  You can find that on the following lines:
+
+	parsing: webserver-poll.py lines 28 - 38
+
+
+--------------------------------  Non-blocking I/O and Caching ----------------------------------------
+I handle non-blocking I/O by breaking from my recv() loop whenever it would block.  This ends the handling of that particular client so that the program can move on to the next one.  If that client has already sent some data before I call recv() again and it would block, that data is stored in a cash reserved for that client.  That way next time I come around, if that client has sent more data and the new data completes an HTTP request, I can handle the full HTTP request.  Here are the line numbers where all of that is happening:
+
+	set non-blocking I/O: 		 	    poller.py line 84
+
+	handle clients that would block:  	    poller.py lines 92 - 94
+
+	***CACHING*** store received data in cache: poller.py lines 91(get data) and 95 - 96(store data)
+
+
+To handle non-blocking I/O when I am sending the response, I just loop back around and keep sending where I left off whenever I get the OS throws the wouldblock or eagain erros.  If the client has more than one full HTTP request in its buffer, I handle them all before breaking out of my loop.  The code for that is on here:
+
+	handle requests: poller.py lines 101 - 111
+
+
+----------------------------------------       Timeouts          ----------------------------------------
+To handle clients that have been inactive, I keep a variable of the last time I cleaned up memory.  Then after I have handled the current requests, I check if (current time - last time I cleaned up) is greater than the timeout time set in the config file.  If it is I go through all of the clients and see if they have had any activity in the last timeout seconds, where timeout is also the timeout set in the config file.  I then close all of the idle sockets.  Here is where that all of that code is:
+
+	set timeout time: 			  webserver-poll.py lines 36 - 38
+
+	check check time and sweep if neccessary: poller.py lines 54 - 56
+	
+	sweep() function: 			  poller.py lines 58 - 64
+
+
+

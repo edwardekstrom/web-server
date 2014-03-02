@@ -51,7 +51,7 @@ class Poller:
                     self.handleServer()
                     continue
                 result = self.handleClient(fd)
-            if(time.time() - self.time_last_checked > 1):
+            if(time.time() - self.time_last_checked > self.timeout):
                 self.sweep()
                 self.time_last_checked = time.time()
 
